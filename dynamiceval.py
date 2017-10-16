@@ -26,6 +26,10 @@ parser.add_argument('--lr', type=float, default=0.002,
                     help='learning rate eta')
 parser.add_argument('--ms', action='store_true',
                     help='uses mean squared gradients instead of sum squared')
+parser.add_argument('--grid', action='store_true',
+                    help='grid search for best hyperparams')
+parser.add_argument('--gridfast', action='store_true',
+                    help='grid search with partial validation set')
 parser.add_argument('--batch_size', type=int, default=100,
                     help='batch size for gradient statistics')
 parser.add_argument('--bptt', type=int, default=5,
@@ -131,6 +135,7 @@ def gradstat():
 
     for param in model.parameters():
         param.decrate = param.MS/gsum
+        param.data0 = 1*param.data
 
 def evaluate():
 
@@ -143,13 +148,13 @@ def evaluate():
             ind = np.nonzero(decratenp>(1/lamb))
             decratenp[ind] = (1/lamb)
             param.decrate = torch.from_numpy(decratenp).type(torch.cuda.FloatTensor)
-            param.data0 = 1*param.data
+
         else:
             decratenp = param.decrate.numpy()
             ind = np.nonzero(decratenp>(1/lamb))
             decratenp[ind] = (1/lamb)
             param.decrate = torch.from_numpy(decratenp).type(torch.FloatTensor)
-            param.data0 = 1*param.data
+
 
     total_loss = 0
 
@@ -231,7 +236,50 @@ gradstat()
 
 #change batch size to 1 for dynamic eval
 args.batch_size=1
-print('running dynamic evaluation')
-#apply dynamic evaluation
-loss = evaluate()
-print('perplexity loss: ' + str(loss[0]))
+if not(args.grid or args.gridfast):
+    print('running dynamic evaluation')
+    #apply dynamic evaluation
+    loss = evaluate()
+    print('perplexity loss: ' + str(loss[0]))
+else:
+    vbest = 99999999
+    lambbest = lamb
+    lrbest = lr
+
+    if args.gridfast:
+        eval_data = val_data[:30000]
+    else:
+        eval_data = val_data
+    print('tuning hyperparameters')
+
+    #hyperparameter values to be searched
+    lrlist = [0.001,0.002,0.003,0.004,0.005]
+    lamblist = [.005,0.01,0.02,0.03]
+
+    for i in range(0,len(lamblist)):
+        for j in range(0,len(lrlist)):
+            lamb = lamblist[i]
+            lr = lrlist[j]
+            loss = evaluate()
+            loss = loss[0]
+            if loss<vbest:
+                lambbest = lamb
+                lrbest = lr
+                vbest = loss
+            for param in model.parameters():
+                param.data = 1*param.data0
+    print('best hyperparams: lr = ' + str(lrbest) + ' lamb = '+ str(lambbest))
+    print('getting validation and test error')
+    eval_data = val_data
+    lamb = lambbest
+    lr = lrbest
+    vloss = evaluate()
+    for param in model.parameters():
+        param.data = 1*param.data0
+
+    eval_data = test_data
+    lamb = lambbest
+    lr = lrbest
+    tloss = evaluate()
+    print('validation perplexity loss: ' + str(vloss[0]))
+    print('test perplexity loss: ' + str(tloss[0]))

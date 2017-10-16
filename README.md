@@ -11,8 +11,13 @@ Instructions for use:
 3. run dynamic evaluation with: python dynamiceval.py --model modelname.pt
 
 
-To replicate results in paper for AWD-LSTM + dynamic eval, train the language model using this repository https://github.com/salesforce/awd-lstm-lm . We used the original codebase from this repository, with the goal of exact replication of results from their paper (which we failed to achieve). The default settings and hyperparameters for dynamiceval.py are the same as used for results in paper for AWD-LSTM + dynamic eval on both wikitext-2 and PTB.
+To replicate results in paper for AWD-LSTM + dynamic eval, train the language model using this repository https://github.com/salesforce/awd-lstm-lm . We used the original codebase from this repository, with the goal of exact replication of results from their paper (which we failed to achieve). The default settings and hyperparameters for dynamiceval.py are the same as used for results in paper for AWD-LSTM + dynamic eval on both WikiText-2 and PTB.
 
+To get stronger results with any other model, you can run with:
+
+python dynamiceval.py --model modelname.pt --grid
+
+This will do a hyperparameter search on the validation set, takes a few hours on PTB
 
 command line arguements:
 
@@ -21,7 +26,11 @@ command line arguements:
 
 --data    -location of the data corpus
 
---val    -measure validation error instead of test error (use for hyperparameter tuning)
+--grid    -hyperparameter grid search over lambda and eta, gives both valid and test error
+
+--gridfast    -same as grid, but only uses first 30k validation tokens for search
+
+--val    -measure validation error instead of test error  
 
 --gpu    -specify a gpu device, uses device 0 by default (set negative for cpu)
 
@@ -29,9 +38,9 @@ command line arguements:
 
 --batch_size    -batch size for gradient statistics on training data
 
---lr    -learning rate eta
+--lr    -learning rate eta (ignored if --grid is set)
 
---lamb    -decay rate lambda
+--lamb    -decay rate lambda (ignored if --grid is set)
 
 --epsilon    -stabilization parameter epsilon
 
