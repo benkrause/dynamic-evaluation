@@ -8,10 +8,10 @@ Instructions for use:
 
 2. Copy the file dynamiceval.py into the repository
 
-3. run dynamic evaluation with: python dynamiceval.py --model modelname.pt
+3. Run dynamic evaluation with: python dynamiceval.py --model modelname.pt
 
 
-To replicate results in paper for AWD-LSTM + dynamic eval, train the language model using this repository https://github.com/salesforce/awd-lstm-lm . We used the original codebase from this repository, with the goal of exact replication of results from their paper (which we failed to achieve). The default settings and hyperparameters for dynamiceval.py are the same as used for results in paper for AWD-LSTM + dynamic eval on both WikiText-2 and PTB.
+To replicate results in paper for AWD-LSTM + dynamic eval, train the language model using this repository https://github.com/salesforce/awd-lstm-lm . We used the original codebase from this repository, with the goal of exact replication of results from their paper (which we failed to achieve). The default settings and hyperparameters for dynamiceval.py are tuned for for AWD-LSTM + dynamic eval on PTB.
 
 To get stronger results with any other model, you can run with:
 
@@ -46,11 +46,8 @@ command line arguements:
 
 --max_batches  -max number of batches for training gradient statistics (-1 uses full training set)
 
---ms
+--oldhyper
 
--The code used to obtain results in the paper for AWD-LSTMs inadvertently used the root sum squared gradients in place of the root mean squared gradients from the training data (this is equation 6 in the paper). Using root sum squared gradients and root mean squared gradients are equivalent under a hyperparameter transformation. By default, this code uses sum of squared gradients on training data, but the --ms option can be used for mean squared gradients, which is consistent with the equations in the paper. Using the --ms flag and scaling the hyperparameters --lr and --epsilon each by (1/sqrt(N)), where N is the number of training batches, yields equivalent results to not using the --ms flag.
-
-
-
+-The original version code inadvertently scaled a couple of terms differently from the equations described in the paper, which affects the hyperparameters. The code was changed to reflect the paper equations, and this flag applies a hyperparameter transformation in a way that accounts for this change. If you run this version of the code with the --oldhyper flag, it is equivalent to running the old version of the code. Some previous results that report hyperparameters with the old code would require applying this hyperparameter transformation to achieve the same results with this code.
 
 

@@ -18,14 +18,14 @@ parser.add_argument('--gpu', type=int, default=0,
                     help='set gpu device ID (-1 for cpu)')
 parser.add_argument('--val', action='store_true',
                     help='set for validation error, test by default')
-parser.add_argument('--lamb', type=float, default=0.02,
+parser.add_argument('--lamb', type=float, default=0.002,
                     help='decay parameter lambda')
-parser.add_argument('--epsilon', type=float, default=0.001,
+parser.add_argument('--epsilon', type=float, default=0.00002,
                     help='stabilization parameter epsilon')
-parser.add_argument('--lr', type=float, default=0.002,
+parser.add_argument('--lr', type=float, default=0.00005,
                     help='learning rate eta')
-parser.add_argument('--ms', action='store_true',
-                    help='uses mean squared gradients instead of sum squared')
+parser.add_argument('--oldhyper', action='store_true',
+                    help='Transforms hyperparameters, equivalent to running old version of code')
 parser.add_argument('--grid', action='store_true',
                     help='grid search for best hyperparams')
 parser.add_argument('--gridfast', action='store_true',
@@ -55,9 +55,7 @@ corpus = data.Corpus(args.data)
 eval_batch_size = 1
 test_batch_size = 1
 
-lr = args.lr
-lamb = args.lamb
-epsilon = args.epsilon
+
 
 def batchify(data, bsz):
     # Work out how cleanly we can divide the dataset into bsz parts.
@@ -125,13 +123,23 @@ def gradstat():
             if batch>= args.max_batches:
                 break
     gsum = 0
+    count = 0
 
     for param in model.parameters():
-        if args.ms:
-            param.MS = torch.sqrt(param.MS/batch)
-        else:
-            param.MS = torch.sqrt(param.MS)
+
+        param.MS = torch.sqrt(param.MS/batch)
+
         gsum+=torch.mean(param.MS)
+        count+=1
+    gsum/=count
+    if args.oldhyper:
+        args.lamb /=count
+        args.lr /=math.sqrt(batch)
+        args.epsilon /=math.sqrt(batch)
+        print("transformed lambda: " + str(args.lamb))
+        print("transformed lr: " + str(args.lr))
+        print("transformed epsilon: " + str(args.epsilon))
+
 
     for param in model.parameters():
         param.decrate = param.MS/gsum
@@ -234,6 +242,10 @@ print('collecting gradient statistics')
 #collect gradient statistics on training data
 gradstat()
 
+lr = args.lr
+lamb = args.lamb
+epsilon = args.epsilon
+
 #change batch size to 1 for dynamic eval
 args.batch_size=1
 if not(args.grid or args.gridfast):
@@ -253,8 +265,8 @@ else:
     print('tuning hyperparameters')
 
     #hyperparameter values to be searched
-    lrlist = [0.001,0.002,0.003,0.004,0.005]
-    lamblist = [.005,0.01,0.02,0.03]
+    lrlist = [0.00003,0.00004,0.00005,0.00006,0.00007]
+    lamblist = [0.001,0.002,0.003,0.005]
 
     for i in range(0,len(lamblist)):
         for j in range(0,len(lrlist)):
