@@ -36,6 +36,8 @@ parser.add_argument('--bptt', type=int, default=5,
                     help='sequence/truncation length')
 parser.add_argument('--max_batches', type=int, default=-1,
                     help='maximum number of training batches for gradient statistics')
+parser.add_argument('--QRNN', action='store_true',
+                    help='Use if model is a QRNN')
 
 
 args = parser.parse_args()
@@ -84,6 +86,9 @@ def get_batch(source, i, evaluation=False):
     return data, target
 
 def gradstat():
+
+    if args.QRNN:
+        model.reset()
 
     total_loss = 0
     start_time = time.time()
@@ -147,6 +152,8 @@ def gradstat():
 
 def evaluate():
 
+    if args.QRNN:
+       model.reset()
     #clips decay rates at 1/lamb
     #otherwise scaled decay rates can be greater than 1
     #would cause decay updates to overshoot
@@ -265,8 +272,12 @@ else:
     print('tuning hyperparameters')
 
     #hyperparameter values to be searched
-    lrlist = [0.00003,0.00004,0.00005,0.00006,0.00007]
+    lrlist = [0.00003,0.00004,0.00005,0.00006,0.00007,0.0001]
     lamblist = [0.001,0.002,0.003,0.005]
+
+    #rescale values if sequence segment length is changed
+    lrlist = [x*(args.bptt/5.0) for x in lrlist]
+    lamblist = [x*(args.bptt/5.0) for x in lamblist]
 
     for i in range(0,len(lamblist)):
         for j in range(0,len(lrlist)):
