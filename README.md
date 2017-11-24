@@ -1,8 +1,8 @@
-####Dynamic evaluation for pytorch language models as implemented in [Dynamic Evaluation of Neural Sequence Models](https://arxiv.org/abs/1709.07432). 
+#### Dynamic evaluation for pytorch language models as implemented in [Dynamic Evaluation of Neural Sequence Models](https://arxiv.org/abs/1709.07432). 
 
-####Requirements: python 3 (tested in 3.5, 3.6), pytorch (tested in 0.1.12, 0.2)
+#### Requirements: python 3 (tested in 3.5, 3.6), pytorch (tested in 0.1.12, 0.2)
 
-####Instructions for use:  
+#### Instructions for use:  
 
 1. Train a language model using an existing repository, such as the [pytorch language modeling tutorial](https://github.com/pytorch/examples/tree/master/word_language_model) . This should save a .pt file with the trained model
 
@@ -10,11 +10,11 @@
 
 3. Run dynamic evaluation with: `python dynamiceval.py --model modelname.pt`
 
-####AWD-LSTM
+#### AWD-LSTM
 
 To replicate results in paper for AWD-LSTM + dynamic eval, train the language model using the [Salesforce AWD-LSTM repository](https://github.com/salesforce/awd-lstm-lm). We used the original codebase from this repository, with the goal of exact replication of results from their paper (which we failed to achieve). The default settings and hyper-parameters for dynamiceval.py are tuned for for AWD-LSTM + dynamic eval on PTB. 
 
-####AWD-QRNN
+#### AWD-QRNN
 
 This code also supports the [pytorch QRNN](https://github.com/salesforce/pytorch-qrnn) with the --QRNN option. AWD-QRNN + dynamic eval obtains very similar results to AWD-LSTM + dynamic eval, and is much faster to train and evaluate. Training an AWD-QRNN on PTB using the Salesforce AWD-LSTM repository, and running dynamic eval with the default settings gives a test perplexity of 50.5. Increasing the sequence segment length from 5 to 20 runs 3x faster (1 minute vs. 3 minutes on PTB), and gives validation (use --val flag) and test perplexities of `51.4/50.5` with the following arguments:
 
@@ -24,7 +24,7 @@ AWD-QRNN trained on wikitext-2 gives validation (use --val flag) and test perple
 
 `python dynamiceval.py --model WT2.pt --QRNN --lr 0.00012 --lamb 0.008 --bptt 20 --data data/wikitext-2`
 
-####Hyper-parameter search
+#### Hyper-parameter search
 
 To get stronger results with any other model or dataset, you can run with:
 
@@ -32,7 +32,7 @@ To get stronger results with any other model or dataset, you can run with:
 
 This will do a hyper-parameter search on the validation set, takes a few hours on PTB with LSTM and default settings, can be much faster with QRNN and/or larger --bptt. If the default model size/settings are changed too much, the hyper-parameters in `lrlist` and `lamblist` may need to be changed for best results. If you want to do a faster search, you can try running with --gridfast to use a subset of the validation set, or you can reduce the number of elements in lamblist (tuning lr is more important).
 
-####Command line arguments:
+#### Command line arguments:
 
 
 `--model` (required)    -filename of the trained model to be evaluated
